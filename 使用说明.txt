@@ -1,0 +1,40 @@
+脚本作者 TUCAOEVER 代码原创 未经允许请勿商用/转载
+
+前置要求 Skript 2.6+ Repuska 2.8.5+
+安装流程 确保前置安装到位 将当前目录下所有以.sk结尾的文件解压至
+plugins/Skript/scripts 目录下(推荐以文件夹格式进行安装) 重启服务器即可
+
+插件指令:
+/supertags menu # 玩家命令用于打开称号菜单
+/supertags set [玩家] [称号ID] # 用于管理员/后台强制设置玩家称号
+/supertags unset [玩家] # 用于重置玩家称号至默认值
+/supertags check [玩家] # 用于检查玩家所使用的称号是否满足称号所需要的权限要求
+/supertags reload # 重载插件数据(不重载插件)
+所有指令单独对应权限为 "supertags.指令" 例如 "supertags.menu"
+如果不想单独设置 只需把 supertags.player 给予玩家组 supertags.admin 给予管理组即可
+
+称号配置解析:
+首次使用配置将在plugins/SUPERTAGS/config.yml内生成
+默认没有任何称号 需要个人独自添加 称号配置格式如下
+Tags:
+  称号ID: # 必须有且唯一 可以使用任意长度字符
+    name: #必须有 即 显示的称号内容
+    lore: #可选 在GUI内称号对应图标显示的Lore "||"为换行符
+    permissions: # 可选 可多个权限 使用 ";" 分隔
+例如:
+Tags:
+  ceshi:
+    name: 测试称号
+    lore: '||  &7测试LORE(第二行)'
+    permissions: supertags.admin
+
+其余配置解析:
+No-Permission-Hide-Tag: false # 玩家没有权限选择的称号是否需要在GUI内隐藏
+Settings.Papi.No-Tag-Name: # 玩家没有选择称号时 %supertags_selected_tag_name% 返回的值
+Settings.Papi.No-Tag: # 玩家没有选择称号时 %supertags_selected_tag% 返回的值
+
+PAPI相关:
+%supertags_selected_tag_name% # 玩家选择的称号内容
+%supertags_selected_tag% # 玩家选择的称号对应的ID
+%supertags_owned_tag_num% # 玩家可以使用的称号数量
+

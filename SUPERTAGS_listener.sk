@@ -1,0 +1,13 @@
+# 加入时判断玩家所选的称号是否有效 无效则将玩家的称号恢复至默认值
+on join:
+	yaml value "Settings.Check-On-Join" from "plugins/SUPERTAGS/playerdata.yml" is true
+	yaml value uuid of player from "plugins/SUPERTAGS/playerdata.yml" is set
+	set {_tag} to yaml value uuid of player from "plugins/SUPERTAGS/playerdata.yml"
+	set {_perms::*} to ST_getTagInfo({_tag}, "PERM")
+	size of {_perms::*} > 0
+	ST_hasPermissions(player, {_perms::*}) is false
+	ST_changeTag(uuid of player, "")
+
+# 每隔 5 分钟保存一次玩家称号数据
+every 5 minutes:
+	save yaml "plugins/SUPERTAGS/playerdata.yml"

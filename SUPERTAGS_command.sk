@@ -1,0 +1,158 @@
+# 可用指令 /st menu [玩家] /st set [玩家] [称号ID] /st unset [玩家] /st check [玩家]
+command /supertags [<text>] [<text>] [<text>] [<text>]:
+	trigger:
+		if command executor is player:
+			arg-1 is set
+			# 使用者相关打开主菜单
+			if arg-1 is "menu":
+				# 判断二号位参数玩家是否存在
+				if arg-2 is not set:
+					if player has permission "supertags.player" or "supertags.menu" or "supertags.admin":
+						ST_mainGUI(player, 1)
+					else:
+						send "%{ST::Messages::No_Permission}%"
+				# 如果存在则属于功能 强制一位玩家打开称号面板
+				else:
+					if player has permission "supertags.menu.others" or "supertags.admin":
+						set {_p} to arg-2 parsed as player
+						{_p} is not set:
+							send "%{ST::Messages::Player_Is_Offline}%"
+							stop
+						ST_mainGUI({_p}, 1)
+					else:
+						send "%{ST::Messages::No_Permission}%"
+
+			# 管理者强制设置玩家的称号 /st set [player] [tagid]
+			else if arg-1 is "set":
+				player has permission "supertags.set" or "supertags.admin"
+				set {_p} to arg-2 parsed as offline player
+				if {_p} is set:
+					if arg-3 is set:
+						if ST_isValidTag(arg-3) is true:
+							ST_changeTag(uuid of {_p}, arg-3)
+							set {_name} to ST_getTagInfo({_tag}, "NAME")
+							{_p} is online:
+								set {_msg} to {ST::Messages::Force_Set_Tag}
+								replace all "{VALUE1}" with ST_getTagInfo({_tag}, "NAME") in {_msg}
+								send "%{_msg}%" to {_p}
+							send "&8[&cSTADMIN&8] &7Set %{_p}%'s tag to %{_name}%." to player
+						else:
+							send "&8[&cSTADMIN&8] &7Tag with ID %arg-3% doesn't exist." to player
+					else:
+						send "&8[&cSTADMIN&8] &7Please enter a Tag ID." to player
+				else:
+					send "&8[&cSTADMIN&8] &7Unknown player."
+			# 管理者强制取消玩家现有的称号 /st unset [player]
+			else if arg-1 is "unset":
+				player has permission "supertags.unset" or "supertags.admin"
+				set {_p} to arg-2 parsed as offline player
+				if {_p} is set:
+					ST_changeTag(uuid of {_p}, "")
+					{_p} is online:
+						set {_msg} to {ST::Messages::Force_Unset_Tag}
+						replace all "{VALUE1}" with name of {_p} in {_msg}
+						send {_msg} to {_p}
+					send "&8[&cSTADMIN&8] &7Unset %{_p}%'s tag." to player
+				else:
+					send "&8[&cSTADMIN&8] &7Unknown player."
+			# 检查一个玩家是否有使用当前正在使用的称号权限
+			# 检查如果为是 则 返回信息 如果为否 则 返回信息 并将目标玩家的称号恢复至默认状态
+			else if arg-1 is "check":
+				player has permission "supertags.check" or "supertags.admin"
+				set {_p} to arg-2 parsed as offline player
+				if {_p} is set:
+					set {_tag} to yaml value uuid of {_p} from "plugins/SUPERTAGS/playerdata.yml"
+					{_tag} is not set:
+						send "&8[&cSTADMIN&8] &7%{_p}% doesn't have any tag selected."
+						stop
+					set {_perms::*} to ST_getTagInfo({_tag}, "PERM")
+					if ST_hasPermissions({_p}, {_perms::*}) is true:
+						set {_name} to ST_getTagInfo({_tag}, "NAME")
+						send "&8[&cSTADMIN&8] &7%{_p}% has permission to use %{_tag}% : %{_name}%." to player
+						stop
+					else:
+						ST_changeTag(uuid of {_p}, "")
+						send "&8[&cSTADMIN&8] &7%{_p}% dosen't have permission to use %{_tag}% : %{_name}%." to player
+						send "&8[&cSTADMIN&8] &7Successfully unset %{_p}%'s tag." to player
+				else:
+					send "&8[&cSTADMIN&8] &7Unknown player." to player
+			else if arg-1 is "reload":
+				player has permission "supertags.reload" or "supertags.admin"
+				load yaml "plugins/SUPERTAGS/playerdata.yml" as "plugins/SUPERTAGS/playerdata.yml"
+				load yaml "plugins/SUPERTAGS/config.yml" as "plugins/SUPERTAGS/config.yml"
+				clear {ST::Messages::*}
+				loop yaml node keys "Messages" from "plugins/SUPERTAGS/config.yml":
+					set {ST::Messages::%loop-key%} to yaml value "Messages.%loop-key%" from "plugins/SUPERTAGS/config.yml"
+				send "&8[&cSTADMIN&8] &7Successfully reload all files." to player
+		if command executor is console:
+			arg-1 is set
+			if arg-1 is "menu":
+				# 判断二号位参数玩家是否存在
+				if arg-2 is set:
+					set {_p} to arg-2 parsed as player
+					{_p} is not set:
+						send "&8[&cSTADMIN&8] &7Target player is offline."
+						stop
+					ST_mainGUI({_p}, 1)
+				else:
+					send "&8[&cSTADMIN&8] &7Please specific one player's name."
+			# 管理者强制设置玩家的称号 /st set [player] [tagid]
+			else if arg-1 is "set":
+				set {_p} to arg-2 parsed as offline player
+				if {_p} is set:
+					if arg-3 is set:
+						if ST_isValidTag(arg-3) is true:
+							ST_changeTag(uuid of {_p}, arg-3)
+							set {_name} to ST_getTagInfo({_tag}, "NAME")
+							{_p} is online:
+								set {_msg} to {ST::Messages::Force_Set_Tag}
+								replace all "{VALUE1}" with ST_getTagInfo({_tag}, "NAME") in {_msg}
+								send "%{_msg}%" to {_p}
+							send "&8[&cSTADMIN&8] &7Set %{_p}%'s tag to %{_name}%." to console
+						else:
+							send "&8[&cSTADMIN&8] &7Tag with ID %arg-3% doesn't exist." to console
+					else:
+						send "&8[&cSTADMIN&8] &7Please enter a Tag ID." to console
+				else:
+					send "&8[&cSTADMIN&8] &7Unknown player." to console
+			# 管理者强制取消玩家现有的称号 /st unset [player]
+			else if arg-1 is "unset":
+				set {_p} to arg-2 parsed as offline player
+				if {_p} is set:
+					ST_changeTag(uuid of {_p}, "")
+					{_p} is online:
+						set {_msg} to {ST::Messages::Force_Unset_Tag}
+						replace all "{VALUE1}" with name of {_p} in {_msg}
+						send {_msg} to {_p}
+					send "&8[&cSTADMIN&8] &7Unset %{_p}%'s tag." to console
+				else:
+					send "&8[&cSTADMIN&8] &7Unknown player." to console
+			# 检查一个玩家是否有使用当前正在使用的称号权限
+			# 检查如果为是 则 返回信息 如果为否 则 返回信息 并将目标玩家的称号恢复至默认状态
+			else if arg-1 is "check":
+				set {_p} to arg-2 parsed as offline player
+				if {_p} is set:
+					set {_tag} to yaml value uuid of {_p} from "plugins/SUPERTAGS/playerdata.yml"
+					{_tag} is not set:
+						send "&8[&cSTADMIN&8] &7%{_p}% doesn't have any tag selected." to console
+						stop
+					set {_perms::*} to ST_getTagInfo({_tag}, "PERM")
+					if ST_hasPermissions({_p}, {_perms::*}) is true:
+						set {_name} to ST_getTagInfo({_tag}, "NAME")
+						send "&8[&cSTADMIN&8] &7%{_p}% has permission to use %{_tag}% : %{_name}%." to console
+						stop
+					else:
+						ST_changeTag(uuid of {_p}, "")
+						send "&8[&cSTADMIN&8] &7%{_p}% dosen't have permission to use %{_tag}% : %{_name}%." to console
+						send "&8[&cSTADMIN&8] &7Successfully unset %{_p}%'s tag." to console
+				else:
+					send "&8[&cSTADMIN&8] &7Unknown player." to console
+			else if arg-1 is "reload":
+				load yaml "plugins/SUPERTAGS/playerdata.yml" as "plugins/SUPERTAGS/playerdata.yml"
+				load yaml "plugins/SUPERTAGS/config.yml" as "plugins/SUPERTAGS/config.yml"
+				clear {ST::Messages::*}
+				loop yaml node keys "Messages" from "plugins/SUPERTAGS/config.yml":
+					set {ST::Messages::%loop-key%} to yaml value "Messages.%loop-key%" from "plugins/SUPERTAGS/config.yml"
+				send "&8[&cSTADMIN&8] &7Successfully reload all files." to console
+
+					

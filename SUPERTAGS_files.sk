@@ -1,0 +1,42 @@
+#称号ID1:
+#  称号显示内容:
+#  称号所需权限:
+#  称号在GUI内显示的LORE:
+
+on load:
+	load yaml "plugins/SUPERTAGS/playerdata.yml" as "plugins/SUPERTAGS/playerdata.yml"
+	load yaml "plugins/SUPERTAGS/config.yml" as "plugins/SUPERTAGS/config.yml"
+
+	clear {ST::Messages::*}
+	
+	add "Main_GUI_Title~           &8▶ 称号 &7| &8TAGS ◀" to {_list::*}
+	add "No_Permission~&8[&c称号&8] &7你没有足够的权限以使用该命令." to {_list::*}
+	add "No_Permission_To_Use~&8[&c称号&8] &7你没有足够的权限以使用该称号." to {_list::*}
+	add "Player_Is_Offline~&8[&c称号&8] &7玩家不在线." to {_list::*}
+	add "Next_Page_Name~&f下一页" to {_list::*}
+	add "Previous_Page_Name~&f上一页" to {_list::*}
+	add "Set_Tag~&8[&c称号&8] &f已将你的称号更改为 {VALUE1}&f." to {_list::*}
+	add "Force_Set_Tag~&8[&c称号&8] &f已将你的称号设置为 &c{VALUE1}&f." to {_list::*}
+	add "Force_Unset_Tag~&8[&c称号&8] &f已将你的称号重置为默认值." to {_list::*}
+	add "Tag_Item_Name~&f选择称号 &r{VALUE1}" to {_list::*}
+
+	loop {_list::*}:
+		set {_texts::*} to loop-value split at "~"
+		yaml value "Messages.%{_texts::1}%" from "plugins/SUPERTAGS/config.yml" is not set
+		set yaml value "Messages.%{_texts::1}%" from "plugins/SUPERTAGS/config.yml" to {_texts::2}
+	clear {_list::*}
+
+	add "Settings.No-Permission-Hide-Tag~false" to {_list::*}
+	add "Settings.Check-On-Join~true" to {_list::*}
+	add "Settings.Papi.No-Tag~无称号" to {_list::*}
+	add "Settings.Papi.No-Tag-Name~配置出错 称号名称缺失" to {_list::*}
+	add "Settings.Papi.No-Tag-Description~当前称号没有任何描述" to {_list::*}
+	loop {_list::*}:
+		set {_texts::*} to loop-value split at "~"
+		yaml value {_texts::1} from "plugins/SUPERTAGS/config.yml" is not set
+		set yaml value {_texts::1} from "plugins/SUPERTAGS/config.yml" to {_texts::2}
+
+	save yaml "plugins/SUPERTAGS/config.yml" without extra lines between nodes
+
+	loop yaml node keys "Messages" from "plugins/SUPERTAGS/config.yml":
+		set {ST::Messages::%loop-key%} to yaml value "Messages.%loop-key%" from "plugins/SUPERTAGS/config.yml"

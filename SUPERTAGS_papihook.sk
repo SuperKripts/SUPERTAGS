@@ -1,0 +1,28 @@
+on placeholder request with prefix "supertags":
+	set {_tag} to yaml value uuid of player from "plugins/SUPERTAGS/playerdata.yml"
+	if identifier is "selected_tag":
+		if {_tag} is set:
+			set the result to {_tag}
+		else:
+			set the result to yaml value "Settings.Papi.No-Tag" from "plugins/SUPERTAGS/config.yml"
+	else if identifier is "selected_tag_name":
+		if {_tag} is set:
+			set {_name} to yaml value "Tags.%{_tag}%.name" from "plugins/SUPERTAGS/config.yml"
+			if {_name} is set:
+				set the result to coloured {_name}
+			else:
+				set the result to yaml value "Settings.Papi.No-Tag-Name" from "plugins/SUPERTAGS/config.yml"
+		else:
+			set the result to yaml value "Settings.Papi.No-Tag" from "plugins/SUPERTAGS/config.yml"
+	else if identifier is "selected_tag_description":
+		if {_tag} is set:
+			set {_desc} to yaml value "Tags.%{_tag}%.description" from "plugins/SUPERTAGS/config.yml"
+			if {_desc} is set:
+				set the result to coloured {_desc}
+			else:
+				set the result to yaml value "Settings.Papi.No-Tag-Description" from "plugins/SUPERTAGS/config.yml"
+		else:
+			set the result to yaml value "Settings.Papi.No-Tag-Description" from "plugins/SUPERTAGS/config.yml"
+	else if identifier is "owned_tag_num":
+		set {_size} to size of ST_getUserValidTags(player)
+		set the result to {_size}

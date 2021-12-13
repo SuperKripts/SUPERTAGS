@@ -1,0 +1,176 @@
+function ST_mainGUI(p: player, page: number):
+	# 确保输入参数满足参数类型要求
+	AND(check [{_p} is set], check [{_page} is set], check [{_page} > 0]) is true
+	create a gui with virtual chest inventory with 6 rows named "%{ST::Messages::Main_GUI_Title}%":
+		format gui slot ST_getBorder(6) with black stained glass pane
+
+		set {_innerSlots::*} to ST_getInner(6)
+		# 开启隐藏无法使用的称号选项后 loop-index 不再和格子顺序对应
+		# 所以此处新增一个计数器用于可用称号计数
+		set {_validSlot} to 1
+		set {_uuid} to uuid of {_p}
+		# 如果隐藏玩家无法使用的称号
+		if yaml value "Settings.No-Permission-Hide-Tag" from "plugins/SUPERTAGS/config.yml" is true:
+			set {_validTags::*} to ST_getUserValidTags({_p})
+			loop {_validTags::*}:
+				loop-index parsed as number > (28 * ({_page} - 1))
+				{_validSlot} <= (28 * {_page})
+				set {_tag} to loop-value
+				set {_lore} to ST_getTagInfo({_tag}, "LORE")
+				set {_name} to {ST::Messages::Tag_Item_Name}
+				set {_tname} to ST_getTagInfo({_tag}, "NAME")
+				replace all "{VALUE1}" with {_tname} in {_name}
+				if ST_isUsing("%uuid of {_p}%", {_tag}) is false:
+					format gui slot {_innerSlots::%{_validSlot}%} with name tag named colored {_name} with legacy lore {_lore}:
+						ST_changeTag({_uuid}, {_tag})
+						close {_p}'s inventory
+						set {_msg} to {ST::Messages::Set_Tag}
+						replace all "{VALUE1}" with colored {_tname} in {_msg}
+						send {_msg} to {_p}
+						add 1 to {_validSlot}
+				else:
+					format gui slot {_innerSlots::%{_validSlot}%} with barrier named colored {_name} with legacy lore {_lore}:
+						ST_changeTag({_uuid}, {_tag})
+						close {_p}'s inventory
+						set {_msg} to {ST::Messages::Set_Tag}
+						replace all "{VALUE1}" with colored {_tname} in {_msg}
+						send {_msg} to {_p}
+						add 1 to {_validSlot}
+			size of {_validTags::*} >  28 * {_page}:
+				format gui slot 43 with player head with custom nbt "{SkullOwner:{Id:""79f13daf-4884-40ab-8e35-95e472463321"",Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjgyYWQxYjljYjRkZDIxMjU5YzBkNzVhYTMxNWZmMzg5YzNjZWY3NTJiZTM5NDkzMzgxNjRiYWM4NGE5NmUifX19""}]}}}" named {ST::Messages::Next_Page_Name} with legacy lore {ST::Messages::Next_Page_Lore}:
+					ST_mainGUI({_p}, {_page} + 1)
+		# 如果不隐藏玩家无法使用的称号
+		else:
+			set {_tagIdList::*} to ST_getTags()
+			size of {_tagIdList::*} > 0
+			loop {_tagIdList::*}:
+				loop-index parsed as number > (28 * ({_page} - 1))
+				{_validSlot} <= (28 * {_page})
+				set {_tag} to loop-value
+				set {_lore} to ST_getTagInfo({_tag}, "LORE")
+				set {_name} to {ST::Messages::Tag_Item_Name}
+				set {_tname} to ST_getTagInfo({_tag}, "NAME")
+				replace all "{VALUE1}" with {_tname} in {_name}
+				format gui slot {_innerSlots::%{_validSlot}%} with name tag named colored {_name} with legacy lore {_lore}:
+					if ST_hasPermissions({_p}, {_perms::*}) is true:
+						ST_changeTag({_uuid}, {_tag})
+						close {_p}'s inventory
+						set {_msg} to {ST::Messages::Set_Tag}
+						replace all "{VALUE1}" with colored {_tname} in {_msg}
+						send {_msg} to {_p}
+					else:
+						close {_p}'s inventory
+						send "%{ST::Messages::No_Permission_To_Use}%"
+				add 1 to {_validSlot}
+			size of {_tagIdList::*} > 28 * {_page}:
+				format gui slot 43 with player head with custom nbt "{SkullOwner:{Id:""79f13daf-4884-40ab-8e35-95e472463321"",Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjgyYWQxYjljYjRkZDIxMjU5YzBkNzVhYTMxNWZmMzg5YzNjZWY3NTJiZTM5NDkzMzgxNjRiYWM4NGE5NmUifX19""}]}}}" named {ST::Messages::Next_Page_Name} with legacy lore {ST::Messages::Next_Page_Lore}:
+					ST_mainGUI({_p}, {_page} + 1)
+		{_page} > 1:
+			format gui slot 37 with player head with custom nbt "{SkullOwner:{Id:""5fecc571-bcbb-4aaa-b53c-b5d8715dbe37"",Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzdhZWU5YTc1YmYwZGY3ODk3MTgzMDE1Y2NhMGIyYTdkNzU1YzYzMzg4ZmYwMTc1MmQ1ZjQ0MTlmYzY0NSJ9fX0=""}]}}}" named {ST::Messages::Previous_Page_Name} with legacy lore {ST::Messages::Previous_Page_Lore}:
+				ST_mainGUI({_p}, {_page} - 1)
+	open last gui to {_p}
+
+# 获取玩家所有可用的称号
+function ST_getUserValidTags(p: player) :: strings:
+	set {_tags::*} to ST_getTags()
+	size of {_tags::*} = 0:
+		return {_tags::*}
+	loop {_tags::*}:
+		set {_perms::*} to ST_getTagInfo(loop-value, "PERM")
+		ST_hasPermissions({_p}, {_perms::*}) is true
+		add loop-value to {_list::*}
+	return {_list::*}
+
+# 修改玩家的称号 数据写入
+function ST_changeTag(uuid: string, tag: string):
+	set yaml value {_uuid} from "plugins/SUPERTAGS/playerdata.yml" to {_tag}
+	save yaml "plugins/SUPERTAGS/playerdata.yml" without extra lines between nodes
+
+# 判断玩家是否已选用该称号
+function ST_isUsing(uuid: string, tag: string) :: boolean:
+	set {_usedTag} to yaml value {_uuid} from "plugins/SUPERTAGS/playerdata.yml"
+	if {_usedTag} is not set:
+		return false
+	else if {_usedTag} is {_tag}:
+		return true
+	return false
+
+# 判断玩家是否有称号所需要的权限
+function ST_hasPermissions(p: player, perms: strings) :: boolean:
+	size of {_perms::*} = 0:
+		return true
+	loop {_perms::*}:
+		{_p} doesn't have permission loop-value
+		return false
+	return true
+
+# 获取称号的相关信息
+function ST_getTagInfo(tag: string, type: string) :: string:
+	# 获取称号所需权限
+	if {_type} is "PERM":
+		set {_perm} to yaml value "Tags.%{_tag}%.permissions" from "plugins/SUPERTAGS/config.yml"
+		{_perm} is set:
+			return {_perm}
+		return ""
+	# 获取称号显示名称
+	else if {_type} is "NAME":
+		set {_name} to yaml value "Tags.%{_tag}%.name" from "plugins/SUPERTAGS/config.yml"
+		{_name} is set:
+			return {_name}
+		return ""
+	# 获取称号显示的LORE
+	else if {_type} is "LORE":
+		set {_lore} to yaml value "Tags.%{_tag}%.lore" from "plugins/SUPERTAGS/config.yml"
+		{_lore} is set:
+			replace all "{VALUE1}" with ST_getTagInfo({_tag}, "DESC") in {_lore}
+			return {_lore}
+		return ""
+	# 获取称号描述
+	else if {_type} is "DESC":
+		set {_desc} to yaml value "Tags.%{_tag}%.description" from "plugins/SUPERTAGS/config.yml"
+		{_desc} is set:
+			return {_desc}
+		return ""
+	else:
+		return ""
+
+# 获取配置文件内所有称号
+function ST_getTags() :: strings:
+	return yaml node keys "Tags" from "plugins/SUPERTAGS/config.yml"
+
+# 判断
+function ST_isValidTag(tag: string) :: boolean:
+	yaml path "Tags.%{_tag}%" from "plugins/SUPERTAGS/config.yml" exists:
+		return true
+	return false
+
+# 获取菜单内圈的格子
+# 小于 3 行时返回空集合
+function ST_getInner(size: integer) :: numbers:
+	{_size} > 2
+	set {_lslot} to 0
+	set {_sslot} to 10
+	set {_a} to ({_size} - 2) * 7
+	loop {_a} times:
+		add {_sslot} to {_list::*}
+		add 1 to {_sslot}
+		add 1 to {_lslot}
+		{_lslot} = 7:
+			add 2 to {_sslot}
+			set {_lslot} to 0
+	return {_list::*}
+
+# 获取菜单外圈的格子
+# 小于 3 行时返回空集合
+function ST_getBorder(size: integer) :: numbers:
+	{_size} > 2
+	loop integers from 0 to 8:
+		add loop-integer to {_list::*}
+	set {_a} to {_size} - 2
+	loop {_a} times:
+		add loop-number * 9 to {_list::*}
+		add loop-number * 9 + 8 to {_list::*}
+	set {_b} to {_size} - 1
+	loop integers from ({_b} * 9) to ({_b} * 9 + 8):
+		add loop-integer to {_list::*}
+	return {_list::*}
